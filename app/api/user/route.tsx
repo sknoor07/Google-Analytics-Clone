@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-// import { eq } from "drizzle-orm";
-// import { db } from "@/configs/db";
-// import { usersTable } from "@/configs/schema";
+
 import { currentUser } from "@clerk/nextjs/server";
-import { supabaseAdmin } from "@/configs/supabase";
 
 export async function POST(req: NextRequest) {
     try {
@@ -54,29 +51,29 @@ export async function POST(req: NextRequest) {
         // =========================================================
         // ✅ SUPABASE ONLY — SINGLE SOURCE OF TRUTH
         // =========================================================
-        const { data, error } = await supabaseAdmin
-            .from("users")
-            .upsert(
-                {
-                    email,
-                    name,
-                },
-                { onConflict: "email" }
-            )
-            .select()
-            .single();
+        // const { data, error } = await supabaseAdmin
+        //     .from("users")
+        //     .upsert(
+        //         {
+        //             email,
+        //             name,
+        //         },
+        //         { onConflict: "email" }
+        //     )
+        //     .select()
+        //     .single();
 
-        if (error) {
-            return NextResponse.json(
-                { error: error.message },
-                { status: 500 }
-            );
-        }
+        // if (error) {
+        //     return NextResponse.json(
+        //         { error: error.message },
+        //         { status: 500 }
+        //     );
+        // }
 
         // =========================================================
         // ✅ SINGLE, CLEAN RESPONSE
         // =========================================================
-        return NextResponse.json(data, { status: 200 });
+    //     return NextResponse.json(data, { status: 200 });
     } catch (error: any) {
         return NextResponse.json(
             { error: error?.message || "Server error" },
