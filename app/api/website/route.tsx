@@ -1,7 +1,7 @@
 import { db } from "@/configs/db";
 import { websiteTable } from "@/configs/schema";
 import { currentUser } from "@clerk/nextjs/server";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req:NextRequest){
@@ -34,6 +34,23 @@ export async function POST(req:NextRequest){
     return NextResponse.json({message:"Website created successfully",data:result},{status:201})
     }
     catch(error){
-        return NextResponse.json({error:error},{status:500})
+        return NextResponse.json({error:"Failed to create website"},{status:500})
     }
 }
+
+export async function GET(req:NextRequest){
+    try{
+        const user = await currentUser();
+        const email = user?.emailAddresses[0].emailAddress;
+
+        if(!email){
+            return NextResponse.json({error:"User email not found while fetching websites"}, {status:500})
+        }
+
+        const result = await db.select().from(websiteTable).where(eq(websiteTable?.userEmail,email as string)).orderBy(desc(websiteTable?.id));
+        return NextResponse.json({message:"All Websites fetched successfully",data:result},{status:200})
+    }catch(error){
+        return NextResponse.json({error:"Failed to fetch websites"},{status:500})
+    }
+}
+
