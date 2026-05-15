@@ -6,7 +6,8 @@ import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 
 const WebsiteCard = ({website}: {website: WebsiteType}) => {
-  const shortdomain= website?.domain.length>25?website?.domain.slice(0,25).concat("..."):website?.domain;
+  const cleanDomain = website?.domain.replace(/^https?:\/\/(www\.)?/, "");
+    const shortdomain = cleanDomain.length > 25 ? cleanDomain.slice(0, 25).concat("...") : cleanDomain;
   const chartData = [
   { month: "January", desktop: 186 },
   { month: "February", desktop: 305 },
@@ -28,7 +29,7 @@ const WebsiteCard = ({website}: {website: WebsiteType}) => {
           <CardTitle>
             <div className='flex gap-2 items-center'>
               <Globe className='h-8 w-8 p-2 rounded-md bg-primary text-white ' />
-              <h2 className='font-bold text-lg'>{shortdomain.replace("https://","")}</h2>
+              <h2 className='font-bold text-lg'>{shortdomain}</h2>
             </div>
           </CardTitle>
         </CardHeader>

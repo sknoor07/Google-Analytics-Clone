@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 function Dashbaord(){
     const [WebsiteList, setWebsiteList] = useState<WebsiteType[]>([]);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(()=>{
         getUserWebsites();
@@ -26,6 +27,8 @@ function Dashbaord(){
         }
         catch(err){
             console.log(err);
+            setError("Failed to load websites. Please try again.");
+            setLoading(false);
         }
     }
     return(<div className="mt-2">
@@ -51,6 +54,11 @@ function Dashbaord(){
                     })}
                     </div>}
                 </div>
+                {error && (
+                    <div className="text-red-500 p-4 border border-red-300 rounded mt-4">
+                        {error}
+                    </div>
+                )}
                 {!loading&&WebsiteList?.length===0?
                 <div className="flex flex-col justify-center items-center gap-4 p-8 border-2 border-dashed rounded-xl mt-2">
                     <Image src={'/website.png'} alt='website' width={100} height={100}/>
