@@ -18,10 +18,11 @@ function WebsiteFrom(){
     const [timezone, setTimezone]=useState('')
     const [enableLocalhostTracking, setEnableLocalhostTracking]=useState(false)
     const [loading, setLoading]=useState(false)
-    const uniqueId = uuidv4();
+    
     const router= useRouter();
 
     const onFormSubmit=async(e:any)=>{
+        const uniqueId = uuidv4();
         e.preventDefault();
         
         try{
@@ -35,11 +36,11 @@ function WebsiteFrom(){
         console.log(result?.data);
         setLoading(false);
         if(result?.data?.message==="Website already exists"){
-            router.push(`/dashboard/new?step=script&websiteId=${result?.data?.data?.websiteId}&domain=${result?.data?.data?.domain}`);
+            router.push(`/dashboard/new?step=script&websiteId=${result?.data?.data?.websiteId}&domain=${result?.data?.data?.domain}&old=${true}`);
         }
         if(result?.data?.message==="Website created successfully"){
             toast.success("Website created successfully");
-            router.push(`/dashboard/new?step=script&websiteId=${uniqueId}&domain=${domain}`);
+            router.push(`/dashboard/new?step=script&websiteId=${uniqueId}&domain=${domain}&old=${false}`);
         }
     }catch(error){
         console.log(error);

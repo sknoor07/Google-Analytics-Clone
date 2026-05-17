@@ -12,6 +12,7 @@ export async function POST(req: NextRequest) {
 
         const email = clerkUser.primaryEmailAddress.emailAddress;
         const name = clerkUser.fullName ?? "";
+        return NextResponse.json({message:"User fetched successfully",data:{email,name}},{status:200});
     } catch (error: any) {
         return NextResponse.json(
             { error: error?.message || "Server error" },
