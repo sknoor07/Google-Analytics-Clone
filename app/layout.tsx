@@ -6,7 +6,7 @@ import {
 } from '@clerk/nextjs'
 import { Provider } from "./provider";
 
-
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,12 +37,20 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
+        <head>
+          <script
+            defer
+            data-website-id="739acc50-fe2a-483f-b4be-eef448b99a2a"
+            data-domain="https://localhost:3000"
+            src="http://localhost:3000/analytics.js">
+          </script> 
+        </head>
         <body
           className={AppFont.className}
         >
           <Provider>
             {children}
-
+            <Toaster />
           </Provider>
         </body>
       </html>
