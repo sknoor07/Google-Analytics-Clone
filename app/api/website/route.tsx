@@ -396,15 +396,15 @@ export async function GET(req: NextRequest) {
 
                     eq(pageViewTable.websiteId, site.websiteId),
 
-                    ...(fromUnix && toUnix
+                    ...(fromUnix
 
-                        ? [
+                        ? [gte(sql`${pageViewTable.entryTime}::bigint`, fromUnix)]
 
-                            gte(sql`${pageViewTable.entryTime}::bigint`, fromUnix),
+                        : []),
 
-                            lte(sql`${pageViewTable.entryTime}::bigint`, toUnix),
+                    ...(toUnix
 
-                        ]
+                        ? [lte(sql`${pageViewTable.entryTime}::bigint`, toUnix)]
 
                         : [])
 
@@ -486,9 +486,9 @@ export async function GET(req: NextRequest) {
 
                 add(countryVisitors, v.country);
 
-                if (v.counrtycode)
+                if (v.countryCode)
 
-                    countryCodeMap[v.country] = v.counrtycode.toUpperCase();
+                    countryCodeMap[v.country] = v.countryCode.toUpperCase();
 
             }
 
@@ -496,9 +496,9 @@ export async function GET(req: NextRequest) {
 
                 add(cityVisitors, v.city);
 
-                if (v.counrtycode)
+                if (v.countryCode)
 
-                    cityCountryMap[v.city] = v.counrtycode.toUpperCase();
+                    cityCountryMap[v.city] = v.countryCode.toUpperCase();
 
             }
 
@@ -506,9 +506,9 @@ export async function GET(req: NextRequest) {
 
                 add(regionVisitors, v.region);
 
-                if (v.counrtycode)
+                if (v.countryCode)
 
-                    regionCountryMap[v.region] = v.counrtycode.toUpperCase();
+                    regionCountryMap[v.region] = v.countryCode.toUpperCase();
 
             }
 

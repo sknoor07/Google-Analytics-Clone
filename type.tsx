@@ -15,7 +15,7 @@ export type WebsiteInfoType={
 export type AnalyticsType={
     avgActiveTime:number,
     totalActiveTime:number,
-    totalSession:number,
+    totalSessions:number,
     totalVisitors:number,
     hourlyVisitors:HourlyVisitorsType[],
 

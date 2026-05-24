@@ -15,7 +15,7 @@ const WebsiteCard = ({websiteInfo}: {websiteInfo: WebsiteInfoType}) => {
       ...hourlyData[0],
       hour:Number(hourlyData[0].hour)-1>=0?Number(hourlyData[0].hour)-1:0,
       count:0,
-      hourLabel:`${Number(hourlyData[0].hour)-1} AM/PM`
+      hourLabel:`${Math.max(0, Number(hourlyData[0].hour) - 1)} AM/PM`
     },hourlyData[0]]: hourlyData;
   
   const chartConfig = {
