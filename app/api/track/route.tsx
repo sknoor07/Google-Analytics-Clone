@@ -15,7 +15,7 @@ export async function POST(req:NextRequest){
     const osInfo= parser.getOS().name?parser.getOS().name:"Custom";
     const browserInfo= parser.getBrowser().name?parser.getBrowser().name:"Custom";
     const ip=req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()|| req.headers.get('x-real-ip')||'123.253.236.68';
-    const geoRes= await fetch(`http://ip-api.com/json/123.253.236.68`);
+    const geoRes= await fetch(`http://ip-api.com/json/${ip}`);
     const geoInfo=await geoRes.json();
     
     
@@ -52,6 +52,7 @@ export async function POST(req:NextRequest){
         city:geoInfo.city||'',
         region:geoInfo.region||'',
         country:geoInfo.country||'',
+        countryCode:geoInfo.countryCode||'',
     }).returning();
     
     }else if(body?.type==="exit"){

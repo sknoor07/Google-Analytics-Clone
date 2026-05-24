@@ -14,7 +14,7 @@
 
   const websiteId = script.getAttribute("data-website-id");
   const domain = script.getAttribute("data-domain");
-  const entryTime = Date.now();
+  const entryTime = Math.floor(Date.now() / 1000);
   const referrer = document?.referrer || "Direct";
 
   const urlParams = new URLSearchParams(window.location.search);
@@ -46,13 +46,13 @@
     body: JSON.stringify(data),
   });
 
-  let activeStartTime = Date.now();
+  let activeStartTime = Math.floor(Date.now()/1000);
   let totalActiveTime = 0;
 
   window.addEventListener("pagehide", () => {
-    const exitTime = Date.now();
+    const exitTime = Math.floor(Date.now()/1000);
 
-    totalActiveTime += Date.now() - activeStartTime;
+    totalActiveTime += Math.floor(Date.now()/1000) - activeStartTime;
 
     const blob = new Blob(
       [
