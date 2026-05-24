@@ -1,6 +1,6 @@
 "use client"
 import { Button } from "@/components/ui/button";
-import { WebsiteType } from "@/type";
+import { WebsiteInfoType, WebsiteType } from "@/type";
 import axios from "axios";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,7 +9,7 @@ import WebsiteCard from "./_components/WebsiteCard";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function Dashbaord(){
-    const [WebsiteList, setWebsiteList] = useState<WebsiteType[]>([]);
+    const [WebsiteList, setWebsiteList] = useState<WebsiteInfoType[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -22,7 +22,7 @@ function Dashbaord(){
             setLoading(true);
             const result = await axios.get('/api/website');
             console.log(result.data);
-            setWebsiteList(result?.data?.data);
+            setWebsiteList(result?.data);
             setLoading(false);
         }
         catch(err){
@@ -71,7 +71,7 @@ function Dashbaord(){
                 </div>:
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 lg:grid-cols-3 xl:grid-cols-4 mt-4">
                     {WebsiteList?.map((website, index) => {
-                        return(<WebsiteCard key={index} website={website}/>)
+                        return(<WebsiteCard key={index} websiteInfo={website}/>)
                     })}
                 </div>
                 }

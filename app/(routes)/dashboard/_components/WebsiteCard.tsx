@@ -1,21 +1,23 @@
 import React from 'react'
-import { WebsiteType } from '@/type'
+import { WebsiteInfoType, WebsiteType } from '@/type'
 import { Globe } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { count } from 'console';
 
-const WebsiteCard = ({website}: {website: WebsiteType}) => {
-  const cleanDomain = website?.domain.replace(/^https?:\/\/(www\.)?/, "");
+const WebsiteCard = ({websiteInfo}: {websiteInfo: WebsiteInfoType}) => {
+  const cleanDomain = websiteInfo?.website?.domain.replace(/^https?:\/\/(www\.)?/, "");
     const shortdomain = cleanDomain.length > 25 ? cleanDomain.slice(0, 25).concat("...") : cleanDomain;
-  const chartData = [
-  { month: "January", desktop: 186 },
-  { month: "February", desktop: 305 },
-  { month: "March", desktop: 237 },
-  { month: "April", desktop: 73 },
-  { month: "May", desktop: 209 },
-  { month: "June", desktop: 214 },
-]
+    const hourlyData= websiteInfo?.analytics?.hourlyVisitors;
+    const chartData= hourlyData?.length==1?[
+    {
+      ...hourlyData[0],
+      hour:Number(hourlyData[0].hour)-1>=0?Number(hourlyData[0].hour)-1:0,
+      count:0,
+      hourLabel:`${Number(hourlyData[0].hour)-1} AM/PM`
+    },hourlyData[0]]: hourlyData;
+  
   const chartConfig = {
   desktop: {
     label: "Desktop",
@@ -46,15 +48,16 @@ const WebsiteCard = ({website}: {website: WebsiteType}) => {
             
             
             <Area
-              dataKey="desktop"
+              dataKey="count"
               type="natural"
               fill="var(--color-desktop)"
               fillOpacity={0.4}
               stroke="var(--color-desktop)"
+              strokeWidth={2}
             />
           </AreaChart>
         </ChartContainer>
-        <h2 className='text-sm mt-1'> <strong>24</strong > Visitors</h2>
+        <h2 className='text-sm mt-1'> <strong>{websiteInfo?.analytics?.totalVisitors}</strong > Visitors</h2>
         </CardContent>
         
       </Card>
