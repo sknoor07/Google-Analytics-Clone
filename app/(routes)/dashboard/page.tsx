@@ -7,6 +7,7 @@ import Link from "next/link";
 import React, { useEffect, useState } from "react"
 import WebsiteCard from "./_components/WebsiteCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { format } from "date-fns";
 
 function Dashbaord(){
     const [WebsiteList, setWebsiteList] = useState<WebsiteInfoType[]>([]);
@@ -20,7 +21,8 @@ function Dashbaord(){
     const getUserWebsites = async()=>{
         try{
             setLoading(true);
-            const result = await axios.get('/api/website');
+            const today= format(new Date(), 'yyyy-MM-dd');
+            const result = await axios.get('/api/website?from='+today+'&to='+today);
             console.log(result.data);
             setWebsiteList(result?.data);
             setLoading(false);

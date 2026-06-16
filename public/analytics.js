@@ -4,10 +4,23 @@
     return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
   }
 
+
+  const session_duration = 12*60*50*1000; // 12 hours in milliseconds
+  const now= date.now();
+
+  
   let visitorId = localStorage.getItem("webtrack_visitor_id");
-  if (!visitorId) {
+  let sessionTime=localStorage.getItem("webtrack_session_time");
+  if (!visitorId || (now-sessionTime) > session_duration) {
+    if(visitorId){
+      localStorage.removeItem("webtrack_visitor_id");
+      localStorage.removeItem("webtrack_session_time");
+    }
     visitorId = generateUUID();
     localStorage.setItem("webtrack_visitor_id", visitorId);
+    localStorage.setItem("webtrack_session_time", now);
+  }else{
+    console.log("Existing visitor: ", visitorId);
   }
 
   const script = document.currentScript;
@@ -63,6 +76,7 @@
           exitTime,
           totalActiveTime,
           visitorId,
+          exitUrl: window.location.href,
         }),
       ],
       { type: "application/json" },
