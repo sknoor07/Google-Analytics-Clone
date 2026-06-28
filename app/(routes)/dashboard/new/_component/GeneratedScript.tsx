@@ -16,11 +16,13 @@ function GeneratedScript() {
     const domain = searchParams.get("domain");
     const old = searchParams.get("old");
 
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+
     const script = `<script
     defer
     data-website-id="${websiteId}"
     data-domain="${domain}"
-    src="http://localhost:3000/analytics.js">
+    src="${origin}/analytics.js">
 </script>`;
 
     const copyScript = async () => {

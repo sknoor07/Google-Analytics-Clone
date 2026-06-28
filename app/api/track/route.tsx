@@ -6,9 +6,14 @@ import {UAParser} from "ua-parser-js"
 export async function POST(req:NextRequest){
     let result;
     try{
-   const rawBody = await req.text();
-   console.log("RAW BODY:", rawBody);
-   const body = JSON.parse(rawBody);
+   let body;
+   try {
+     body = await req.json();
+   } catch (parseError) {
+     const rawBody = await req.text();
+     console.error("Invalid JSON payload:", rawBody, parseError);
+     return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
+   }
     const parser= new UAParser(req.headers.get('user-agent')||'');
     const deviceInfo= parser.getDevice().vendor?parser.getDevice().vendor:"Custom";
     const cpuInfo= parser.getCPU().architecture?parser.getCPU().architecture:"Custom";
@@ -60,6 +65,7 @@ export async function POST(req:NextRequest){
         .set({
             exitTime:body.exitTime,
             totalActiveTime:body.totalActiveTime,
+            exitUrl: body.exitUrl,
         })
         .where(eq(pageViewTable.visitorId,body.visitorId))
         .returning();

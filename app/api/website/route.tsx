@@ -112,19 +112,14 @@ export async function GET(req: NextRequest) {
 
 
 
-    const fromUnix = from
+    const parseDateParam = (value: string | null) => {
+        if (!value) return null;
+        const parsed = new Date(value);
+        return Number.isNaN(parsed.getTime()) ? null : Math.floor(parsed.getTime() / 1000);
+    };
 
-        ? Math.floor(new Date(`${from}T00:00:00`).getTime() / 1000)
-
-        : null;
-
-
-
-    const toUnix = to
-
-        ? Math.floor(new Date(`${to}T23:59:59`).getTime() / 1000)
-
-        : null;
+    const fromUnix = parseDateParam(from);
+    const toUnix = parseDateParam(to);
 
 
 

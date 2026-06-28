@@ -39,4 +39,5 @@ export const pageViewTable= pgTable("pageViews",{
     region:varchar({length:50}),
     country:varchar({length:50}),
     countryCode:varchar({length:10}),
+    exitUrl:varchar({length:2048}),
 });
