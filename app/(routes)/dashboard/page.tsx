@@ -21,8 +21,12 @@ function Dashbaord(){
     const getUserWebsites = async()=>{
         try{
             setLoading(true);
-            const today= format(new Date(), 'yyyy-MM-dd');
-            const result = await axios.get('/api/website?from='+today+'&to='+today);
+            const now = new Date();
+            const todayStart = format(now, "yyyy-MM-dd'T'00:00:00xxx");
+            const todayEnd = format(now, "yyyy-MM-dd'T'23:59:59xxx");
+            const result = await axios.get(
+                `/api/website?from=${encodeURIComponent(todayStart)}&to=${encodeURIComponent(todayEnd)}`
+            );
             console.log(result.data);
             setWebsiteList(result?.data);
             setLoading(false);
