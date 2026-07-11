@@ -6,7 +6,10 @@ import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import WebsiteFormInput from "./_components/FormInput";
 import PageViewAnalytics from "./_components/PageViewAnalytics";
+import SourceWidget from "./_components/SourceWidget";
 import { format } from "date-fns";
+import CountriesWidget from "./_components/CountriesWidget";
+import GadgetWidget from "./_components/GadgetWidget";
 
 export type AnalyticsType =
   | "hourly"
@@ -79,6 +82,7 @@ function WebsitePageDetail() {
         { signal: controller.signal },
       );
       setWebsiteInfo(response?.data[0]);
+      console.log("Website Analytics Data:", response?.data[0]);
     } catch (error) {
       if (
         !(error instanceof Error) ||
@@ -95,6 +99,11 @@ function WebsitePageDetail() {
     <div className="mt-7 gap-4 flex flex-col">
       <WebsiteFormInput websiteList={websiteList} setFormData={setFormData} handleRefresh={getWebsiteAnalyticsDetails} />
       <PageViewAnalytics websiteInfo={websiteInfo} loading={loading} analyticsType={formData.analyticsType} />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+      <SourceWidget websiteAnalytics={websiteInfo?.analytics} loading={loading}/>
+      <CountriesWidget CountriesAnalytics={websiteInfo?.analytics} loading={loading}/>
+      <GadgetWidget GadgetAnalytics={websiteInfo?.analytics} loading={loading}/>
+      </div>
     </div>
   );
 }
