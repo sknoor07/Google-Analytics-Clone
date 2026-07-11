@@ -11,10 +11,13 @@ export async function POST(req: NextRequest) {
       await req.json();
 
     if (!websiteId || !domain || !timezone) {
-      return NextResponse.json({ error: "Invalid request" });
+      return NextResponse.json(
+        { error: "Invalid request" },
+        { status: 400 },
+      );
     }
     const user = await currentUser();
-    const email = user?.emailAddresses[0].emailAddress;
+    const email = user?.emailAddresses?.[0]?.emailAddress;
 
     if (!email) {
       return NextResponse.json(

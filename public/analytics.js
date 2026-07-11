@@ -8,7 +8,10 @@
   const now = Date.now();
 
   let visitorId = localStorage.getItem("webtrack_visitor_id");
-  const pageViewId = crypto.randomUUID();
+  const pageViewId =
+    typeof crypto?.randomUUID === "function"
+      ? crypto.randomUUID()
+      : generateUUID();
   let sessionTime = localStorage.getItem("webtrack_session_time");
 
   if (!visitorId || now - sessionTime > session_duration) {

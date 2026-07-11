@@ -1,5 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
-import type { AnalyticsType, WebsiteInfoType } from "@/type";
+import type { WebsiteInfoType } from "@/type";
+import type { AnalyticsType } from "../page";
 import LabelCountItems from "./LabelCountItems";
 import { Separator } from "@/components/ui/separator";
 import { TrendingUp } from "lucide-react";
@@ -26,7 +27,6 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 function PageViewAnalytics({ websiteInfo, loading, analyticsType }: Props) {
-  console.log("Website Info in PageViewAnalytics:", websiteInfo);
   const chartData =
     String(analyticsType) === "hourly"
       ? websiteInfo?.analytics?.hourlyVisitors
@@ -49,11 +49,7 @@ function PageViewAnalytics({ websiteInfo, loading, analyticsType }: Props) {
       {!loading?
       <Card className="">
         <CardContent className="p-5">
-          {loading ? (
-            <p className="text-sm text-muted-foreground mt-2">
-              Loading analytics...
-            </p>
-          ) : websiteInfo ? (
+          {websiteInfo ? (
             <div className="flex gap-6 items-center">
               <LabelCountItems
                 label="Visitors"
@@ -103,20 +99,12 @@ function PageViewAnalytics({ websiteInfo, loading, analyticsType }: Props) {
               }}
             >
               <CartesianGrid vertical={false} />
-              <XAxis
-                dataKey={
-                  xAxisKey
-                }
-              />
+              <XAxis dataKey={xAxisKey} />
               <YAxis
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
-                tickCount={
-                  websiteInfo?.analytics?.totalVisitors
-                    ? websiteInfo.analytics.totalVisitors + 3
-                    : 3
-                }
+                tickCount={6}
                 allowDecimals={false}
               />
 

@@ -3,7 +3,7 @@
 import { WebsiteInfoType, WebsiteType } from "@/type";
 import axios from "axios";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import WebsiteFormInput from "./_components/FormInput";
 import PageViewAnalytics from "./_components/PageViewAnalytics";
 import { format } from "date-fns";
@@ -30,6 +30,7 @@ function WebsitePageDetail() {
   const [websiteList, setWebsiteList] = useState<WebsiteType[]>([]);
   const [loading, setLoading] = useState(false);
   const [websiteInfo, setWebsiteInfo] = useState<WebsiteInfoType | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const [formData, setFormData] = useState<FormDataType>({
     analyticsType: "hourly",
@@ -37,11 +38,9 @@ function WebsitePageDetail() {
     toDate: new Date(),
   });
 
-  //console.log("Website ID:", websiteId);
   useEffect(() => {
     if (websiteId) {
       getWebsiteList();
-      getWebsiteAnalyticsDetails();
     }
   }, [websiteId]);
 
@@ -64,6 +63,10 @@ function WebsitePageDetail() {
   const getWebsiteAnalyticsDetails = async () => {
     try {
       setLoading(true);
+      abortControllerRef.current?.abort();
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
       if (!formData.fromDate || !formData.toDate) {
         return;
       }
@@ -71,18 +74,19 @@ function WebsitePageDetail() {
       const fromDate = format(formData.fromDate, "yyyy-MM-dd'T'00:00:00");
 
       const toDate = format(formData.toDate, "yyyy-MM-dd'T'23:59:59");
-      //console.log("Fetching analytics for:", { websiteId, fromDate, toDate });
       const response = await axios.get(
         `/api/website?websiteId=${websiteId}&from=${fromDate}&to=${toDate}`,
+        { signal: controller.signal },
       );
-      //console.log("Website Analytics Data:", response.data[0]);
       setWebsiteInfo(response?.data[0]);
-      setLoading(false);
     } catch (error) {
-      setLoading(false);
-      console.error("Error fetching website details:", error);
+      if (
+        !(error instanceof Error) ||
+        (error.name !== "AbortError" && error.name !== "CanceledError")
+      ) {
+        console.error("Error fetching website details:", error);
+      }
     } finally {
-      //console.log("Finished fetching analytics for:", { websiteId, fromDate: formData.fromDate, toDate: formData.toDate });
       setLoading(false);
     }
   };

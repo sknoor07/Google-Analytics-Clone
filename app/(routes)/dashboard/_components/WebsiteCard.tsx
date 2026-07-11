@@ -5,7 +5,6 @@ import { Globe } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { count } from 'console';
 import Link from 'next/link';
 
 const WebsiteCard = ({websiteInfo}: {websiteInfo: WebsiteInfoType}) => {

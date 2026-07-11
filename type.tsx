@@ -20,14 +20,25 @@ export type AnalyticsType={
     totalVisitors:number,
     hourlyVisitors:HourlyVisitorsType[],
     dailyVisitors:DailyVisitorsType[],
-    weeklyVisitors:DailyVisitorsType[],
-    monthlyVisitors:DailyVisitorsType[],
+    weeklyVisitors:WeeklyVisitorsType[],
+    monthlyVisitors:MonthlyVisitorsType[],
 
 }
 
 export type BrowserType={
     name:string,
-    
+    uv:number,
+    image:string,
+}
+
+export type WeeklyVisitorsType={
+    weekStart:string,
+    count:number,
+}
+
+export type MonthlyVisitorsType={
+    month:string,
+    count:number,
 }
 
 export type HourlyVisitorsType={
