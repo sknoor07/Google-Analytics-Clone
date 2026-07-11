@@ -1,3 +1,4 @@
+'use client'
 import React from 'react'
 import { WebsiteInfoType, WebsiteType } from '@/type'
 import { Globe } from 'lucide-react';
@@ -5,8 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { count } from 'console';
+import Link from 'next/link';
 
 const WebsiteCard = ({websiteInfo}: {websiteInfo: WebsiteInfoType}) => {
+  //console.log("Website Info:", websiteInfo);
   const cleanDomain = websiteInfo?.website?.domain.replace(/^https?:\/\/(www\.)?/, "");
     const shortdomain = cleanDomain.length > 25 ? cleanDomain.slice(0, 25).concat("...") : cleanDomain;
     const hourlyData= websiteInfo?.analytics?.hourlyVisitors;
@@ -25,6 +28,7 @@ const WebsiteCard = ({websiteInfo}: {websiteInfo: WebsiteInfoType}) => {
   },
 } satisfies ChartConfig
   return (
+    <Link href={`/dashboard/website/${websiteInfo?.website?.websiteId}`}>
     <div>
       <Card>
         <CardHeader>
@@ -44,7 +48,7 @@ const WebsiteCard = ({websiteInfo}: {websiteInfo: WebsiteInfoType}) => {
               left: 12,
               right: 12,
               top: 8,
-              bottom: 12,
+              bottom: 14,
             }}
           >
             
@@ -64,6 +68,7 @@ const WebsiteCard = ({websiteInfo}: {websiteInfo: WebsiteInfoType}) => {
         
       </Card>
     </div>
+    </Link>
   )
 }
 

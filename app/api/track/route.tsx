@@ -36,6 +36,7 @@ export async function POST(req:NextRequest){
     if(body?.type==="entry"){
     result = await db.insert(pageViewTable).values({
         visitorId:body.visitorId,
+        pageViewId:body.pageViewId,
         websiteId:body.websiteId,
         domain:body.domain,
         type:body.type,
@@ -67,7 +68,7 @@ export async function POST(req:NextRequest){
             totalActiveTime:body.totalActiveTime,
             exitUrl: body.exitUrl,
         })
-        .where(eq(pageViewTable.visitorId,body.visitorId))
+        .where(eq(pageViewTable.pageViewId, body.pageViewId))
         .returning();
     }
 }

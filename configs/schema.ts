@@ -16,6 +16,7 @@ export const websiteTable = pgTable("websites", {
 
 export const pageViewTable= pgTable("pageViews",{
     id:integer().primaryKey().generatedAlwaysAsIdentity(),
+    pageViewId:varchar().notNull().unique(),
     visitorId:varchar({length:255}),
     websiteId:varchar({ length: 255 }).notNull(),
     domain:varchar({length:255}).notNull(),

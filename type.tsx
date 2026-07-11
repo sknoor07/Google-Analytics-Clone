@@ -13,12 +13,21 @@ export type WebsiteInfoType={
 }
 
 export type AnalyticsType={
+    browsers:BrowserType[],
     avgActiveTime:number,
     totalActiveTime:number,
     totalSessions:number,
     totalVisitors:number,
     hourlyVisitors:HourlyVisitorsType[],
+    dailyVisitors:DailyVisitorsType[],
+    weeklyVisitors:DailyVisitorsType[],
+    monthlyVisitors:DailyVisitorsType[],
 
+}
+
+export type BrowserType={
+    name:string,
+    
 }
 
 export type HourlyVisitorsType={
@@ -26,4 +35,8 @@ export type HourlyVisitorsType={
     date:string,
     hour:number,
     hourLabel:string,
+}
+export type DailyVisitorsType={
+    count:number,
+    date:string,
 }

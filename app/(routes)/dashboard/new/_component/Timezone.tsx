@@ -15,7 +15,7 @@ type props={
 
 export function Timezone({timezone, setTimezone}: props) {
     
-  return (
+  return ( 
     <Select value={timezone} onValueChange={setTimezone}>
       <SelectTrigger className="w-full max-w-full">
         <SelectValue placeholder="Select a timezone" />
