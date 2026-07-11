@@ -5,38 +5,64 @@ import { and, desc, eq, gte, lte, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { toZonedTime } from "date-fns-tz";
 
-export async function POST(req:NextRequest){
-    try{
-    const {websiteId,domain,timezone,enableLocalhostTracking}=await req.json();
+export async function POST(req: NextRequest) {
+  try {
+    const { websiteId, domain, timezone, enableLocalhostTracking } =
+      await req.json();
 
-    if(!websiteId || !domain || !timezone){
-        return NextResponse.json({error:"Invalid request"})
+    if (!websiteId || !domain || !timezone) {
+      return NextResponse.json(
+        { error: "Invalid request" },
+        { status: 400 },
+      );
     }
     const user = await currentUser();
-    const email = user?.emailAddresses[0].emailAddress;
+    const email = user?.emailAddresses?.[0]?.emailAddress;
 
-    if(!email){
-        return NextResponse.json({error:"User Email Not found while adding website"}, {status:500})
+    if (!email) {
+      return NextResponse.json(
+        { error: "User Email Not found while adding website" },
+        { status: 500 },
+      );
     }
 
-    const existingDomain= await db.select().from(websiteTable).where(and(eq(websiteTable?.domain,domain),eq(websiteTable?.userEmail,email)));
-    if(existingDomain.length>0){
-        return NextResponse.json({message:"Website already exists",data:existingDomain[0]},{status:200})
+    const existingDomain = await db
+      .select()
+      .from(websiteTable)
+      .where(
+        and(
+          eq(websiteTable?.domain, domain),
+          eq(websiteTable?.userEmail, email),
+        ),
+      );
+    if (existingDomain.length > 0) {
+      return NextResponse.json(
+        { message: "Website already exists", data: existingDomain[0] },
+        { status: 200 },
+      );
     }
 
-    const result= await db.insert(websiteTable).values({
-        websiteId:websiteId,
-        domain:domain,
-        timezone:timezone,
-        enableLocalhostTracking:enableLocalhostTracking,
-        userEmail:email as string
-    }).returning();
+    const result = await db
+      .insert(websiteTable)
+      .values({
+        websiteId: websiteId,
+        domain: domain,
+        timezone: timezone,
+        enableLocalhostTracking: enableLocalhostTracking,
+        userEmail: email as string,
+      })
+      .returning();
 
-    return NextResponse.json({message:"Website created successfully",data:result},{status:201})
-    }
-    catch(error){
-        return NextResponse.json({error:"Failed to create website"},{status:500})
-    }
+    return NextResponse.json(
+      { message: "Website created successfully", data: result },
+      { status: 201 },
+    );
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Failed to create website" },
+      { status: 500 },
+    );
+  }
 }
 /* ---------------------------------------------
 
@@ -47,26 +73,16 @@ export async function POST(req:NextRequest){
 --------------------------------------------- */
 
 const getSafetimezone = (tz?: string | null) => {
+  if (!tz) return "UTC";
 
-    if (!tz) return "UTC";
+  try {
+    Intl.DateTimeFormat("en-US", { timeZone: tz });
 
-
-
-    try {
-
-        Intl.DateTimeFormat("en-US", { timeZone: tz });
-
-        return tz;
-
-    } catch {
-
-        return "UTC";
-
-    }
-
+    return tz;
+  } catch {
+    return "UTC";
+  }
 };
-
-
 
 /* ---------------------------------------------
 
@@ -75,693 +91,518 @@ const getSafetimezone = (tz?: string | null) => {
 --------------------------------------------- */
 
 const formatDateInTZ = (date: Date, timezone: string) =>
+  new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
 
-    new Intl.DateTimeFormat("en-CA", {
+    year: "numeric",
 
-        timeZone: timezone,
+    month: "2-digit",
 
-        year: "numeric",
-
-        month: "2-digit",
-
-        day: "2-digit",
-
-    }).format(date);
-
-
+    day: "2-digit",
+  }).format(date);
 
 export async function GET(req: NextRequest) {
+  const user = await currentUser();
 
-    const user = await currentUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-    if (!user) {
+  const websiteId = req.nextUrl.searchParams.get("websiteId");
 
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const from = req.nextUrl.searchParams.get("from");
 
-    }
+  const to = req.nextUrl.searchParams.get("to");
 
+  const websiteOnly = req.nextUrl.searchParams.get("websiteOnly");
 
+  const parseDateParam = (value: string | null) => {
+    if (!value) return null;
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime())
+      ? null
+      : Math.floor(parsed.getTime() / 1000);
+  };
 
-    const websiteId = req.nextUrl.searchParams.get("websiteId");
+  const fromUnix = parseDateParam(from);
+  const toUnix = parseDateParam(to);
 
-    const from = req.nextUrl.searchParams.get("from");
-
-    const to = req.nextUrl.searchParams.get("to");
-
-    const websiteOnly = req.nextUrl.searchParams.get("websiteOnly");
-
-
-
-    const parseDateParam = (value: string | null) => {
-        if (!value) return null;
-        const parsed = new Date(value);
-        return Number.isNaN(parsed.getTime()) ? null : Math.floor(parsed.getTime() / 1000);
-    };
-
-    const fromUnix = parseDateParam(from);
-    const toUnix = parseDateParam(to);
-
-
-
-    /* ---------------------------------------------
+  /* ---------------------------------------------
 
        WEBSITE ONLY
 
     --------------------------------------------- */
 
-    if (websiteOnly === "true") {
-
-        if (websiteId) {
-
-            const websites = await db
-
-                .select()
-
-                .from(websiteTable)
-
-                .where(
-
-                    and(
-
-                        eq(
-
-                            websiteTable.userEmail,
-
-                            user.primaryEmailAddress!.emailAddress
-
-                        ),
-
-                        eq(websiteTable.websiteId, websiteId)
-
-                    )
-
-                );
-
-
-
-            return NextResponse.json(websites[0]);
-
-        }
-
-
-
-        const websites = await db
-
-            .select()
-
-            .from(websiteTable)
-
-            .where(
-
-                eq(websiteTable.userEmail, user.primaryEmailAddress!.emailAddress)
-
-            );
-
-
-
-        return NextResponse.json(websites);
-
-    }
-
-
-
-    /* ---------------------------------------------
-
-       FETCH WEBSITES
-
-    --------------------------------------------- */
-
-    const websites = await db
+  if (websiteOnly === "true") {
+    if (websiteId) {
+      const websites = await db
 
         .select()
 
         .from(websiteTable)
 
         .where(
+          and(
+            eq(
+              websiteTable.userEmail,
 
-            websiteId
+              user.primaryEmailAddress!.emailAddress,
+            ),
 
-                ? and(
+            eq(websiteTable.websiteId, websiteId),
+          ),
+        );
 
-                    eq(
+      return NextResponse.json(websites[0]);
+    }
 
-                        websiteTable.userEmail,
+    const websites = await db
 
-                        user.primaryEmailAddress!.emailAddress
+      .select()
 
-                    ),
+      .from(websiteTable)
 
-                    eq(websiteTable.websiteId, websiteId)
+      .where(
+        eq(websiteTable.userEmail, user.primaryEmailAddress!.emailAddress),
+      );
 
-                )
+    return NextResponse.json(websites);
+  }
 
-                : eq(
+  /* ---------------------------------------------
 
-                    websiteTable.userEmail,
+       FETCH WEBSITES
 
-                    user.primaryEmailAddress!.emailAddress
+    --------------------------------------------- */
 
-                )
+  const websites = await db
 
-        )
+    .select()
 
-        .orderBy(sql`${websiteTable.id} DESC`);
+    .from(websiteTable)
 
+    .where(
+      websiteId
+        ? and(
+            eq(
+              websiteTable.userEmail,
 
+              user.primaryEmailAddress!.emailAddress,
+            ),
 
-    const result: any[] = [];
+            eq(websiteTable.websiteId, websiteId),
+          )
+        : eq(
+            websiteTable.userEmail,
 
+            user.primaryEmailAddress!.emailAddress,
+          ),
+    )
 
+    .orderBy(sql`${websiteTable.id} DESC`);
 
-    /* ---------------------------------------------
+  const result: any[] = [];
+
+  /* ---------------------------------------------
 
        FORMATTERS (UNCHANGED)
 
     --------------------------------------------- */
 
-    const formatSimple = (map: Record<string, number>) =>
+  const formatSimple = (map: Record<string, number>) =>
+    Object.entries(map).map(([name, uv]) => ({ name, uv }));
 
-        Object.entries(map).map(([name, uv]) => ({ name, uv }));
+  const formatWithImage = (map: Record<string, number>) =>
+    Object.entries(map).map(([name, uv]) => ({
+      name,
 
+      uv,
 
+      image: `/${name.toLowerCase()}.png`,
+    }));
 
-    const formatWithImage = (map: Record<string, number>) =>
+  const formatCountries = (
+    map: Record<string, number>,
 
-        Object.entries(map).map(([name, uv]) => ({
+    codeMap: Record<string, string>,
+  ) =>
+    Object.entries(map).map(([name, uv]) => ({
+      name,
 
-            name,
+      uv,
 
-            uv,
+      image: codeMap[name]
+        ? `https://flagsapi.com/${codeMap[name]}/flat/64.png`
+        : "/country.png",
+    }));
 
-            image: `/${name.toLowerCase()}.png`,
+  const formatCities = (
+    map: Record<string, number>,
 
-        }));
+    codeMap: Record<string, string>,
+  ) =>
+    Object.entries(map).map(([name, uv]) => ({
+      name,
 
+      uv,
 
+      image: codeMap[name]
+        ? `https://flagsapi.com/${codeMap[name]}/flat/64.png`
+        : "/city.png",
+    }));
 
-    const formatCountries = (
+  const formatRegions = (
+    map: Record<string, number>,
 
-        map: Record<string, number>,
+    codeMap: Record<string, string>,
+  ) =>
+    Object.entries(map).map(([name, uv]) => ({
+      name,
 
-        codeMap: Record<string, string>
+      uv,
 
-    ) =>
+      image: codeMap[name]
+        ? `https://flagsapi.com/${codeMap[name]}/flat/64.png`
+        : "/region.png",
+    }));
 
-        Object.entries(map).map(([name, uv]) => ({
+  const getDomainName = (value: string) => {
+    try {
+      const host = new URL(
+        value.startsWith("http") ? value : `https://${value}`,
+      ).hostname;
 
-            name,
+      return host.replace("www.", "").split(".")[0];
+    } catch {
+      return value.split(".")[0];
+    }
+  };
 
-            uv,
+  const formatReferrals = (map: Record<string, number>) =>
+    Object.entries(map).map(([name, uv]) => ({
+      name,
 
-            image: codeMap[name]
+      uv,
 
-                ? `https://flagsapi.com/${codeMap[name]}/flat/64.png`
+      domainName: getDomainName(name),
+    }));
 
-                : "/country.png",
-
-        }));
-
-
-
-    const formatCities = (
-
-        map: Record<string, number>,
-
-        codeMap: Record<string, string>
-
-    ) =>
-
-        Object.entries(map).map(([name, uv]) => ({
-
-            name,
-
-            uv,
-
-            image: codeMap[name]
-
-                ? `https://flagsapi.com/${codeMap[name]}/flat/64.png`
-
-                : "/city.png",
-
-        }));
-
-
-
-    const formatRegions = (
-
-        map: Record<string, number>,
-
-        codeMap: Record<string, string>
-
-    ) =>
-
-        Object.entries(map).map(([name, uv]) => ({
-
-            name,
-
-            uv,
-
-            image: codeMap[name]
-
-                ? `https://flagsapi.com/${codeMap[name]}/flat/64.png`
-
-                : "/region.png",
-
-        }));
-
-
-
-    const getDomainName = (value: string) => {
-
-        try {
-
-            const host = new URL(
-
-                value.startsWith("http") ? value : `https://${value}`
-
-            ).hostname;
-
-            return host.replace("www.", "").split(".")[0];
-
-        } catch {
-
-            return value.split(".")[0];
-
-        }
-
-    };
-
-
-
-    const formatReferrals = (map: Record<string, number>) =>
-
-        Object.entries(map).map(([name, uv]) => ({
-
-            name,
-
-            uv,
-
-            domainName: getDomainName(name),
-
-        }));
-
-
-
-    /* ---------------------------------------------
+  /* ---------------------------------------------
 
        LOOP WEBSITES
 
     --------------------------------------------- */
 
-    for (const site of websites) {
+  for (const site of websites) {
+    const siteTZ = getSafetimezone(site.timezone);
 
-        const siteTZ = getSafetimezone(site.timezone);
+    const views = await db
 
+      .select()
 
+      .from(pageViewTable)
 
-        const views = await db
+      .where(
+        and(
+          eq(pageViewTable.websiteId, site.websiteId),
 
-            .select()
+          ...(fromUnix
+            ? [gte(sql`${pageViewTable.entryTime}::bigint`, fromUnix)]
+            : []),
 
-            .from(pageViewTable)
+          ...(toUnix
+            ? [lte(sql`${pageViewTable.entryTime}::bigint`, toUnix)]
+            : []),
+        ),
+      );
 
-            .where(
+    /* ---------- UNIQUE VISITORS ---------- */
 
-                and(
+    const makeSetMap = () => ({}) as Record<string, Set<string>>;
 
-                    eq(pageViewTable.websiteId, site.websiteId),
+    const countryVisitors = makeSetMap();
 
-                    ...(fromUnix
+    const cityVisitors = makeSetMap();
 
-                        ? [gte(sql`${pageViewTable.entryTime}::bigint`, fromUnix)]
+    const regionVisitors = makeSetMap();
 
-                        : []),
+    const deviceVisitors = makeSetMap();
 
-                    ...(toUnix
+    const osVisitors = makeSetMap();
 
-                        ? [lte(sql`${pageViewTable.entryTime}::bigint`, toUnix)]
+    const browserVisitors = makeSetMap();
 
-                        : [])
+    const referralVisitors = makeSetMap();
 
-                )
+    const refParamsVisitors = makeSetMap();
 
-            );
+    const utmSourceVisitors = makeSetMap();
 
+    const urlVisitors = makeSetMap();
 
+    const countryCodeMap: Record<string, string> = {};
 
-        /* ---------- UNIQUE VISITORS ---------- */
+    const cityCountryMap: Record<string, string> = {};
 
-        const makeSetMap = () => ({} as Record<string, Set<string>>);
+    const regionCountryMap: Record<string, string> = {};
 
+    const uniqueVisitors = new Set<string>();
 
+    let totalActiveTime = 0;
 
-        const countryVisitors = makeSetMap();
+    views.forEach((v) => {
+      if (!v.visitorId) return;
 
-        const cityVisitors = makeSetMap();
+      uniqueVisitors.add(v.visitorId);
 
-        const regionVisitors = makeSetMap();
+      if (v.totalActiveTime && v.totalActiveTime > 0) {
+        totalActiveTime += v.totalActiveTime;
+      }
 
-        const deviceVisitors = makeSetMap();
+      const add = (map: Record<string, Set<string>>, key: string) => {
+        map[key] ??= new Set();
 
-        const osVisitors = makeSetMap();
+        map[key].add(v.visitorId!);
+      };
 
-        const browserVisitors = makeSetMap();
+      if (v.country) {
+        add(countryVisitors, v.country);
 
-        const referralVisitors = makeSetMap();
+        if (v.countryCode)
+          countryCodeMap[v.country] = v.countryCode.toUpperCase();
+      }
 
-        const refParamsVisitors = makeSetMap();
+      if (v.city) {
+        add(cityVisitors, v.city);
 
-        const utmSourceVisitors = makeSetMap();
+        if (v.countryCode) cityCountryMap[v.city] = v.countryCode.toUpperCase();
+      }
 
-        const urlVisitors = makeSetMap();
+      if (v.region) {
+        add(regionVisitors, v.region);
 
+        if (v.countryCode)
+          regionCountryMap[v.region] = v.countryCode.toUpperCase();
+      }
 
+      if (v.device) add(deviceVisitors, v.device);
 
-        const countryCodeMap: Record<string, string> = {};
+      if (v.os) add(osVisitors, v.os);
 
-        const cityCountryMap: Record<string, string> = {};
+      if (v.browser) add(browserVisitors, v.browser);
 
-        const regionCountryMap: Record<string, string> = {};
+      if (v.referrer) add(referralVisitors, v.referrer);
 
+      if (v.refParams) add(refParamsVisitors, v.refParams);
 
+      if (v.utmsource) add(utmSourceVisitors, v.utmsource);
 
-        const uniqueVisitors = new Set<string>();
+      if (v.url) add(urlVisitors, v.url);
+    });
 
-        let totalActiveTime = 0;
+    const toCountMap = (map: Record<string, Set<string>>) =>
+      Object.fromEntries(Object.entries(map).map(([k, v]) => [k, v.size]));
 
+    const totalVisitors = uniqueVisitors.size;
 
+    const totalSessions = views.length;
 
-        views.forEach(v => {
+    const avgActiveTime =
+      totalVisitors > 0 ? Math.round(totalActiveTime / totalVisitors) : 0;
 
-            if (!v.visitorId) return;
+    /* ---------- HOURLY VISITORS ---------- */
 
-            uniqueVisitors.add(v.visitorId);
+    const hourlyMap: Record<string, Set<string>> = {};
 
+    const hourlyVisitors: any[] = [];
 
+    if (views.length > 0) {
+      const start = fromUnix
+        ? new Date(fromUnix * 1000)
+        : new Date(Math.min(...views.map((v) => Number(v.entryTime) * 1000)));
 
-            if (v.totalActiveTime && v.totalActiveTime > 0) {
+      const end = toUnix
+        ? new Date(toUnix * 1000)
+        : new Date(Math.max(...views.map((v) => Number(v.entryTime) * 1000)));
 
-                totalActiveTime += v.totalActiveTime;
+      let cursor = new Date(start);
 
-            }
+      while (cursor <= end) {
+        const local = toZonedTime(cursor, siteTZ);
 
+        const date = formatDateInTZ(local, siteTZ);
 
+        const hour = local.getHours();
 
-            const add = (map: Record<string, Set<string>>, key: string) => {
+        const key = `${date}-${hour}`;
 
-                map[key] ??= new Set();
+        hourlyVisitors.push({
+          date,
 
-                map[key].add(v.visitorId!);
+          hour,
 
-            };
+          hourLabel: local.toLocaleString("en-US", {
+            hour: "numeric",
 
+            hour12: true,
 
+            timeZone: siteTZ,
+          }),
 
-            if (v.country) {
-
-                add(countryVisitors, v.country);
-
-                if (v.countryCode)
-
-                    countryCodeMap[v.country] = v.countryCode.toUpperCase();
-
-            }
-
-            if (v.city) {
-
-                add(cityVisitors, v.city);
-
-                if (v.countryCode)
-
-                    cityCountryMap[v.city] = v.countryCode.toUpperCase();
-
-            }
-
-            if (v.region) {
-
-                add(regionVisitors, v.region);
-
-                if (v.countryCode)
-
-                    regionCountryMap[v.region] = v.countryCode.toUpperCase();
-
-            }
-
-
-
-            if (v.device) add(deviceVisitors, v.device);
-
-            if (v.os) add(osVisitors, v.os);
-
-            if (v.browser) add(browserVisitors, v.browser);
-
-            if (v.referrer) add(referralVisitors, v.referrer);
-
-            if (v.refParams) add(refParamsVisitors, v.refParams);
-
-            if (v.utmsource) add(utmSourceVisitors, v.utmsource);
-
-            if (v.url) add(urlVisitors, v.url);
-
+          count: 0,
         });
 
+        hourlyMap[key] = new Set();
 
+        cursor.setHours(cursor.getHours() + 1);
+      }
 
-        const toCountMap = (map: Record<string, Set<string>>) =>
+      views.forEach((v) => {
+        if (!v.entryTime || !v.visitorId) return;
 
-            Object.fromEntries(Object.entries(map).map(([k, v]) => [k, v.size]));
+        const local = toZonedTime(
+          new Date(Number(v.entryTime) * 1000),
 
+          siteTZ,
+        );
 
+        const date = formatDateInTZ(local, siteTZ);
 
-        const totalVisitors = uniqueVisitors.size;
+        hourlyMap[`${date}-${local.getHours()}`]?.add(v.visitorId);
+      });
 
-        const totalSessions = views.length;
-
-        const avgActiveTime =
-
-            totalVisitors > 0 ? Math.round(totalActiveTime / totalVisitors) : 0;
-
-
-
-        /* ---------- HOURLY VISITORS ---------- */
-
-        const hourlyMap: Record<string, Set<string>> = {};
-
-        const hourlyVisitors: any[] = [];
-
-
-
-        if (views.length > 0) {
-
-            const start = fromUnix
-
-                ? new Date(fromUnix * 1000)
-
-                : new Date(Math.min(...views.map(v => Number(v.entryTime) * 1000)));
-
-
-
-            const end = toUnix
-
-                ? new Date(toUnix * 1000)
-
-                : new Date(Math.max(...views.map(v => Number(v.entryTime) * 1000)));
-
-
-
-            let cursor = new Date(start);
-
-
-
-            while (cursor <= end) {
-
-                const local = toZonedTime(cursor, siteTZ);
-
-                const date = formatDateInTZ(local, siteTZ);
-
-                const hour = local.getHours();
-
-                const key = `${date}-${hour}`;
-
-
-
-                hourlyVisitors.push({
-
-                    date,
-
-                    hour,
-
-                    hourLabel: local.toLocaleString("en-US", {
-
-                        hour: "numeric",
-
-                        hour12: true,
-
-                        timeZone: siteTZ,
-
-                    }),
-
-                    count: 0,
-
-                });
-
-
-
-                hourlyMap[key] = new Set();
-
-                cursor.setHours(cursor.getHours() + 1);
-
-            }
-
-
-
-            views.forEach(v => {
-
-                if (!v.entryTime || !v.visitorId) return;
-
-
-
-                const local = toZonedTime(
-
-                    new Date(Number(v.entryTime) * 1000),
-
-                    siteTZ
-
-                );
-
-
-
-                const date = formatDateInTZ(local, siteTZ);
-
-                hourlyMap[`${date}-${local.getHours()}`]?.add(v.visitorId);
-
-            });
-
-
-
-            hourlyVisitors.forEach(h => {
-
-                h.count = hourlyMap[`${h.date}-${h.hour}`]?.size || 0;
-
-            });
-
-        }
-
-
-
-        /* ---------- DAILY VISITORS ---------- */
-
-        const dailyMap: Record<string, Set<string>> = {};
-
-
-
-        views.forEach(v => {
-
-            if (!v.entryTime || !v.visitorId) return;
-
-
-
-            const local = toZonedTime(
-
-                new Date(Number(v.entryTime) * 1000),
-
-                siteTZ
-
-            );
-
-
-
-            const date = formatDateInTZ(local, siteTZ);
-
-
-
-            dailyMap[date] ??= new Set();
-
-            dailyMap[date].add(v.visitorId);
-
-        });
-
-
-
-        const dailyVisitors = Object.entries(dailyMap).map(([date, set]) => ({
-
-            date,
-
-            count: set.size,
-
-        }));
-
-
-
-        /* ---------- FINAL RESPONSE ---------- */
-
-        result.push({
-
-            website: site,
-
-            analytics: {
-
-                totalVisitors,
-
-                totalSessions,
-
-                totalActiveTime,
-
-                avgActiveTime,
-
-                hourlyVisitors,
-
-                dailyVisitors,
-
-
-
-                countries: formatCountries(
-
-                    toCountMap(countryVisitors),
-
-                    countryCodeMap
-
-                ),
-
-                cities: formatCities(toCountMap(cityVisitors), cityCountryMap),
-
-                regions: formatRegions(
-
-                    toCountMap(regionVisitors),
-
-                    regionCountryMap
-
-                ),
-
-
-
-                devices: formatWithImage(toCountMap(deviceVisitors)),
-
-                os: formatWithImage(toCountMap(osVisitors)),
-
-                browsers: formatWithImage(toCountMap(browserVisitors)),
-
-
-
-                referrals: formatReferrals(toCountMap(referralVisitors)),
-
-                refParams: formatSimple(toCountMap(refParamsVisitors)),
-
-                utmSources: formatSimple(toCountMap(utmSourceVisitors)),
-
-                urls: formatSimple(toCountMap(urlVisitors)),
-
-            },
-
-        });
-
+      hourlyVisitors.forEach((h) => {
+        h.count = hourlyMap[`${h.date}-${h.hour}`]?.size || 0;
+      });
     }
 
+    /* ---------- DAILY VISITORS ---------- */
 
+    const dailyMap: Record<string, Set<string>> = {};
 
-    return NextResponse.json(result);
+    views.forEach((v) => {
+      if (!v.entryTime || !v.visitorId) return;
 
+      const local = toZonedTime(
+        new Date(Number(v.entryTime) * 1000),
+
+        siteTZ,
+      );
+
+      const date = formatDateInTZ(local, siteTZ);
+
+      dailyMap[date] ??= new Set();
+
+      dailyMap[date].add(v.visitorId);
+    });
+
+    const dailyVisitors = Object.entries(dailyMap).map(([date, set]) => ({
+      date,
+
+      count: set.size,
+    }));
+
+    /* ---------- WEEKLY VISITORS ---------- */
+
+    const weeklyMap: Record<string, Set<string>> = {};
+
+    views.forEach((v) => {
+      if (!v.entryTime || !v.visitorId) return;
+
+      const local = toZonedTime(new Date(Number(v.entryTime) * 1000), siteTZ);
+
+      // Beginning of the week (Sunday)
+      const weekStart = new Date(local);
+      weekStart.setDate(local.getDate() - local.getDay());
+      weekStart.setHours(0, 0, 0, 0);
+
+      const key = formatDateInTZ(weekStart, siteTZ);
+
+      weeklyMap[key] ??= new Set();
+      weeklyMap[key].add(v.visitorId);
+    });
+
+    const weeklyVisitors = Object.entries(weeklyMap).map(
+      ([weekStart, visitors]) => ({
+        weekStart,
+        count: visitors.size,
+      }),
+    );
+
+    /* ---------- MONTHLY VISITORS ---------- */
+
+    const monthlyMap: Record<string, Set<string>> = {};
+
+    views.forEach((v) => {
+      if (!v.entryTime || !v.visitorId) return;
+
+      const local = toZonedTime(new Date(Number(v.entryTime) * 1000), siteTZ);
+
+      const month = `${local.getFullYear()}-${String(local.getMonth() + 1).padStart(2, "0")}`;
+
+      monthlyMap[month] ??= new Set();
+      monthlyMap[month].add(v.visitorId);
+    });
+
+    const monthlyVisitors = Object.entries(monthlyMap).map(
+      ([month, visitors]) => ({
+        month,
+        count: visitors.size,
+      }),
+    );
+
+    /* ---------- FINAL RESPONSE ---------- */
+
+    result.push({
+      website: site,
+
+      analytics: {
+        totalVisitors,
+
+        totalSessions,
+
+        totalActiveTime,
+
+        avgActiveTime,
+
+        hourlyVisitors,
+
+        dailyVisitors,
+
+        weeklyVisitors,
+        
+        monthlyVisitors,
+
+        countries: formatCountries(
+          toCountMap(countryVisitors),
+
+          countryCodeMap,
+        ),
+
+        cities: formatCities(toCountMap(cityVisitors), cityCountryMap),
+
+        regions: formatRegions(
+          toCountMap(regionVisitors),
+
+          regionCountryMap,
+        ),
+
+        devices: formatWithImage(toCountMap(deviceVisitors)),
+
+        os: formatWithImage(toCountMap(osVisitors)),
+
+        browsers: formatWithImage(toCountMap(browserVisitors)),
+
+        referrals: formatReferrals(toCountMap(referralVisitors)),
+
+        refParams: formatSimple(toCountMap(refParamsVisitors)),
+
+        utmSources: formatSimple(toCountMap(utmSourceVisitors)),
+
+        urls: formatSimple(toCountMap(urlVisitors)),
+      },
+    });
+  }
+
+  return NextResponse.json(result);
 }
-
-
-

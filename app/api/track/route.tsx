@@ -14,28 +14,41 @@ export async function POST(req:NextRequest){
      console.error("Invalid JSON payload:", rawBody, parseError);
      return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
    }
-    const parser= new UAParser(req.headers.get('user-agent')||'');
-    const deviceInfo= parser.getDevice().vendor?parser.getDevice().vendor:"Custom";
-    const cpuInfo= parser.getCPU().architecture?parser.getCPU().architecture:"Custom";
-    const osInfo= parser.getOS().name?parser.getOS().name:"Custom";
-    const browserInfo= parser.getBrowser().name?parser.getBrowser().name:"Custom";
-    const ip=req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()|| req.headers.get('x-real-ip')||'123.253.236.68';
-    const geoRes= await fetch(`http://ip-api.com/json/${ip}`);
-    const geoInfo=await geoRes.json();
+    const parser = new UAParser(req.headers.get('user-agent') || '');
+    const deviceInfo = parser.getDevice().vendor ? parser.getDevice().vendor : "Custom";
+    const cpuInfo = parser.getCPU().architecture ? parser.getCPU().architecture : "Custom";
+    const osInfo = parser.getOS().name ? parser.getOS().name : "Custom";
+    const browserInfo = parser.getBrowser().name ? parser.getBrowser().name : "Custom";
+    const ip =
+      req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+      req.headers.get('x-real-ip') ||
+      '123.253.236.68';
+    const geoRes = await fetch(
+      `http://ip-api.com/json/${ip}`,
+      { signal: AbortSignal.timeout(5000) },
+    );
+    const geoInfo = await geoRes.json();
     
     
 
-    // console.log("deviceInfo: ",deviceInfo)
-    // console.log("cpuInfo: ",cpuInfo)
-    // console.log("osInfo: ",osInfo)
-    // console.log("browserInfo: ",browserInfo)
-    // console.log("Ip Address: ",ip)
-    // console.log("Geo Info: ",geoInfo)
-    // console.log("Body Data : ",body)
+    if (body?.type !== "entry" && body?.type !== "exit") {
+      return NextResponse.json(
+        { error: "Invalid event type" },
+        { status: 400 },
+      );
+    }
 
-    if(body?.type==="entry"){
+    if (body?.type === "exit" && !body?.pageViewId) {
+      return NextResponse.json(
+        { error: "Missing pageViewId for exit event" },
+        { status: 400 },
+      );
+    }
+
+    if (body?.type === "entry") {
     result = await db.insert(pageViewTable).values({
         visitorId:body.visitorId,
+        pageViewId:body.pageViewId,
         websiteId:body.websiteId,
         domain:body.domain,
         type:body.type,
@@ -67,7 +80,7 @@ export async function POST(req:NextRequest){
             totalActiveTime:body.totalActiveTime,
             exitUrl: body.exitUrl,
         })
-        .where(eq(pageViewTable.visitorId,body.visitorId))
+        .where(eq(pageViewTable.pageViewId, body.pageViewId))
         .returning();
     }
 }

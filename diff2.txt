@@ -1,0 +1,84 @@
+diff --git a/configs/schema.ts b/configs/schema.ts
+index c4f6ef5..59cf3f6 100644
+--- a/configs/schema.ts
++++ b/configs/schema.ts
+@@ -16,6 +16,7 @@ export const websiteTable = pgTable("websites", {
+ 
+ export const pageViewTable= pgTable("pageViews",{
+     id:integer().primaryKey().generatedAlwaysAsIdentity(),
++    pageViewId:varchar().notNull().unique(),
+     visitorId:varchar({length:255}),
+     websiteId:varchar({ length: 255 }).notNull(),
+     domain:varchar({length:255}).notNull(),
+diff --git a/public/analytics.js b/public/analytics.js
+index cb75089..d6f802a 100644
+--- a/public/analytics.js
++++ b/public/analytics.js
+@@ -8,7 +8,9 @@
+   const now = Date.now();
+ 
+   let visitorId = localStorage.getItem("webtrack_visitor_id");
++  const pageViewId = crypto.randomUUID();
+   let sessionTime = localStorage.getItem("webtrack_session_time");
++
+   if (!visitorId || now - sessionTime > session_duration) {
+     if (visitorId) {
+       localStorage.removeItem("webtrack_visitor_id");
+@@ -38,6 +40,7 @@
+ 
+   const data = {
+     type: "entry",
++    pageViewId,
+     websiteId: websiteId,
+     domain: domain,
+     entryTime: entryTime,
+@@ -71,6 +74,7 @@
+       [
+         JSON.stringify({
+           type: "exit",
++          pageViewId,
+           websiteId,
+           domain,
+           exitTime,
+@@ -85,5 +89,4 @@
+     navigator.sendBeacon(trackEndpoint, blob);
+   });
+ 
+-  //window.addEventListener("pagehide", handleExit);
+ })();
+diff --git a/type.tsx b/type.tsx
+index 4411c36..2c36494 100644
+--- a/type.tsx
++++ b/type.tsx
+@@ -13,17 +13,30 @@ export type WebsiteInfoType={
+ }
+ 
+ export type AnalyticsType={
++    browsers:BrowserType[],
+     avgActiveTime:number,
+     totalActiveTime:number,
+     totalSessions:number,
+     totalVisitors:number,
+     hourlyVisitors:HourlyVisitorsType[],
++    dailyVisitors:DailyVisitorsType[],
++    weeklyVisitors:DailyVisitorsType[],
++    monthlyVisitors:DailyVisitorsType[],
+ 
+ }
+ 
++export type BrowserType={
++    name:string,
++    
++}
++
+ export type HourlyVisitorsType={
+     count:number,
+     date:string,
+     hour:number,
+     hourLabel:string,
++}
++export type DailyVisitorsType={
++    count:number,
++    date:string,
+ }
+\ No newline at end of file

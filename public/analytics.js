@@ -8,7 +8,12 @@
   const now = Date.now();
 
   let visitorId = localStorage.getItem("webtrack_visitor_id");
+  const pageViewId =
+    typeof crypto?.randomUUID === "function"
+      ? crypto.randomUUID()
+      : generateUUID();
   let sessionTime = localStorage.getItem("webtrack_session_time");
+
   if (!visitorId || now - sessionTime > session_duration) {
     if (visitorId) {
       localStorage.removeItem("webtrack_visitor_id");
@@ -38,6 +43,7 @@
 
   const data = {
     type: "entry",
+    pageViewId,
     websiteId: websiteId,
     domain: domain,
     entryTime: entryTime,
@@ -71,6 +77,7 @@
       [
         JSON.stringify({
           type: "exit",
+          pageViewId,
           websiteId,
           domain,
           exitTime,
@@ -85,5 +92,4 @@
     navigator.sendBeacon(trackEndpoint, blob);
   });
 
-  //window.addEventListener("pagehide", handleExit);
 })();
