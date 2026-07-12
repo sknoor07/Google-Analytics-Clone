@@ -16,6 +16,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import SourceWidgetSkeleton from "./_skeletons/WidgetSkeleton";
 
 type Props = {
   websiteAnalytics: AnalyticsType | undefined;
@@ -39,6 +40,7 @@ const chartConfig = {
 function SourceWidget({ websiteAnalytics, loading }: Props) {
   return (
     <div>
+      {loading ? <SourceWidgetSkeleton /> : (
       <Card>
         <CardContent className="p-5">
           <Tabs defaultValue="source" className="w-[400px]">
@@ -132,7 +134,7 @@ function SourceWidget({ websiteAnalytics, loading }: Props) {
             </TabsContent>
           </Tabs>
         </CardContent>
-      </Card>
+      </Card>)}
     </div>
   );
 }

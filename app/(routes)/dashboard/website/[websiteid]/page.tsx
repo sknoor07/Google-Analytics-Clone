@@ -82,7 +82,7 @@ function WebsitePageDetail() {
         { signal: controller.signal },
       );
       setWebsiteInfo(response?.data[0]);
-      console.log("Website Analytics Data:", response?.data[0]);
+      //console.log("Website Analytics Data:", response?.data[0]);
     } catch (error) {
       if (
         !(error instanceof Error) ||

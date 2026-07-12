@@ -4,6 +4,7 @@ import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AnalyticsType, CountriesType, WebsiteInfoType } from "@/type";
 import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis } from "recharts";
+import SourceWidgetSkeleton from "./_skeletons/WidgetSkeleton";
 
 
 type Props = {
@@ -27,9 +28,10 @@ const chartConfig = {
 
 function GadgetWidget({ GadgetAnalytics, loading }: Props) {
     return <div>
+      {loading ? <SourceWidgetSkeleton /> : (
         <Card>
                 <CardContent className="p-5">
-                  <Tabs defaultValue="source" className="w-[400px]">
+                  <Tabs defaultValue="devices" className="w-[400px]">
                     <TabsList>
                       <TabsTrigger value="devices">Devices</TabsTrigger>
                       <TabsTrigger value="os">Operating Systems</TabsTrigger>
@@ -163,7 +165,8 @@ function GadgetWidget({ GadgetAnalytics, loading }: Props) {
                     </TabsContent>
                   </Tabs>
                 </CardContent>
-              </Card>
+        </Card>)
+      }
     </div>
 }
 
