@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import type { WebsiteInfoType } from "@/type";
+import type { LiveUserType, WebsiteInfoType } from "@/type";
 import type { AnalyticsType } from "../page";
 import LabelCountItems from "./LabelCountItems";
 import { Separator } from "@/components/ui/separator";
@@ -17,6 +17,7 @@ type Props = {
   websiteInfo?: WebsiteInfoType | null;
   loading?: boolean;
   analyticsType?: AnalyticsType;
+  liveUsersCount?:number;
 };
 
 const chartConfig = {
@@ -26,7 +27,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-function PageViewAnalytics({ websiteInfo, loading, analyticsType }: Props) {
+function PageViewAnalytics({ websiteInfo, loading, analyticsType,liveUsersCount }: Props) {
   const chartData =
     String(analyticsType) === "hourly"
       ? websiteInfo?.analytics?.hourlyVisitors
@@ -77,7 +78,7 @@ function PageViewAnalytics({ websiteInfo, loading, analyticsType }: Props) {
               <Separator orientation="vertical" className="h-14" />
               <LabelCountItems
                 label="Live Users"
-                value={websiteInfo.analytics?.browsers?.length ?? 0}
+                value={liveUsersCount??0}
               />
             </div>
           ) : (
