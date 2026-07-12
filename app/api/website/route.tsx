@@ -606,3 +606,12 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json(result);
 }
+
+
+export async function DELETE(req: NextRequest) {
+  const {websiteId}= await req.json();
+  const user= await currentUser();
+
+  const result= await db.delete(websiteTable).where(and(eq(websiteTable.websiteId,websiteId),eq(websiteTable.userEmail,user?.primaryEmailAddress?.emailAddress)));
+  return NextResponse.json({message:'Record Deleted Successfully'});
+}

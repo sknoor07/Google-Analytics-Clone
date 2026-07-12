@@ -10,7 +10,13 @@ import { WebsiteType } from "@/type";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, RefreshCw, Settings } from "lucide-react";
+import {
+  Calendar as CalendarIcon,
+  RefreshCw,
+  Settings,
+  SlidersHorizontal,
+  Trash2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -20,15 +26,31 @@ import {
 } from "@/components/ui/popover";
 import { DateRange } from "react-day-picker";
 import { AnalyticsType, FormDataType } from "../page";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import axios from "axios";
+import { toast } from "sonner";
 
 export type FormInputProps = {
-  websiteList: WebsiteType[],
+  websiteList: WebsiteType[];
   setFormData: (formData: FormDataType) => void;
-  handleRefresh: (flag:boolean) =>void;
+  handleRefresh: (flag: boolean) => void;
 };
 
-
-function WebsiteFormInput({ websiteList, setFormData, handleRefresh }: FormInputProps) {
+function WebsiteFormInput({
+  websiteList,
+  setFormData,
+  handleRefresh,
+}: FormInputProps) {
   const params = useParams<{ websiteid?: string | string[] }>();
   const router = useRouter();
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -42,15 +64,15 @@ function WebsiteFormInput({ websiteList, setFormData, handleRefresh }: FormInput
 
   const [selectedValue, setSelectedValue] = useState(websiteId ?? "");
   const handleAnalyticsTypeChange = (value: string) => {
-  if (
-    value === "hourly" ||
-    value === "daily" ||
-    value === "weekly" ||
-    value === "monthly"
-  ) {
-    setAnalyticsType(value);
-  }
-};
+    if (
+      value === "hourly" ||
+      value === "daily" ||
+      value === "weekly" ||
+      value === "monthly"
+    ) {
+      setAnalyticsType(value);
+    }
+  };
   const [analyticsType, setAnalyticsType] = useState<AnalyticsType>("hourly");
 
   useEffect(() => {
@@ -66,9 +88,27 @@ function WebsiteFormInput({ websiteList, setFormData, handleRefresh }: FormInput
     setFormData({
       analyticsType: analyticsType,
       fromDate: dateRange?.from,
-      toDate: dateRange?.to??dateRange?.from,
-    })
-  },[analyticsType, dateRange])
+      toDate: dateRange?.to ?? dateRange?.from,
+    });
+  }, [analyticsType, dateRange]);
+
+  // --- Handlers for the settings menu ---
+  const handleDelete = async () => {
+    try {
+      await axios.delete('/api/website', {
+        data: { websiteId: websiteId },
+      });
+      toast.success('Website Deleted!');
+      router.replace('/dashboard');
+    } catch (error) {
+      toast.error('Failed to delete website. Please try again.');
+      console.error('Delete website error', error);
+    }
+  };
+
+  const handleMoreSettings = () => {
+    router.push(`/dashboard/website/${websiteId}/settings`);
+  };
 
   return (
     <div className="flex gap-4 items-center justify-between">
@@ -131,13 +171,58 @@ function WebsiteFormInput({ websiteList, setFormData, handleRefresh }: FormInput
             </SelectGroup>
           </SelectContent>
         </Select>
-        <Button className="h-10 w-10" variant="outline" onClick={() => handleRefresh(true)}>
+        <Button
+          className="h-10 w-10"
+          variant="outline"
+          onClick={() => handleRefresh(true)}
+        >
           <RefreshCw className="h-4 w-4" />
         </Button>
       </div>
-      <Button className="h-10 w-10" variant="outline">
-        <Settings className="h-4 w-4" />
-      </Button>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button className="h-10 w-10" variant="outline">
+            <Settings className="h-4 w-4" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="end" sideOffset={8} className="w-48 p-1.5">
+          <div className="flex flex-col gap-1">
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-2 text-sm h-9 px-2"
+              onClick={handleMoreSettings}
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              More Settings
+            </Button>
+
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start gap-2 text-sm h-9 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete
+                    your website from your account.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <Button  variant='destructive' className=" text-white" onClick={handleDelete}>Delete</ Button>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }

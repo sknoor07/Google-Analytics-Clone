@@ -106,9 +106,9 @@ function WebsitePageDetail() {
   };
 
   return (
-    <div className="mt-7 gap-4 flex flex-col">
+    <div className="mt-7 gap-4 flex flex-col mb-10">
       <WebsiteFormInput websiteList={websiteList} setFormData={setFormData} handleRefresh={getWebsiteAnalyticsDetails} />
-      <PageViewAnalytics websiteInfo={websiteInfo} loading={loading} analyticsType={formData.analyticsType} liveUsers={liveUsers}/>
+      <PageViewAnalytics websiteInfo={websiteInfo} loading={loading} analyticsType={formData.analyticsType} liveUsersCount={liveUsers?.length}/>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
       <SourceWidget websiteAnalytics={websiteInfo?.analytics} loading={loading}/>
       <CountriesWidget CountriesAnalytics={websiteInfo?.analytics} loading={loading}/>
