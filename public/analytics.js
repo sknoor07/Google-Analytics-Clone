@@ -29,6 +29,7 @@
   const script = document.currentScript;
   const trackerOrigin = script?.src ? new URL(script.src, window.location.href).origin : window.location.origin;
   const trackEndpoint = new URL("/api/track", trackerOrigin).href;
+  const trackLiveUserEndpoint = new URL("/api/live-user", trackerOrigin).href;
 
   const websiteId = script.getAttribute("data-website-id");
   const domain = script.getAttribute("data-domain");
@@ -91,5 +92,22 @@
 
     navigator.sendBeacon(trackEndpoint, blob);
   });
+
+  const sendLivePing = () => {
+    fetch(trackLiveUserEndpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        websiteId,
+        visitorId,
+        last_seen: Date.now().toString(),
+        url: window.location.href
+      }),
+    });
+  }
+
+  setInterval(sendLivePing, 30000)
 
 })();

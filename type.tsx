@@ -97,3 +97,20 @@ export type DailyVisitorsType={
     count:number,
     date:string,
 }
+
+export type LiveUserType={
+    browser:string,
+    city:string,
+    country:string,
+    countrycode:string,
+    device:string,
+    id:number,
+    last_seen:bigint,
+    lat:string,
+    lon:string,
+    os:string,
+    region:string,
+    url:string,
+    visitorId:string,
+    websiteId:string,
+}
