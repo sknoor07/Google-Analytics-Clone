@@ -94,11 +94,16 @@ function WebsiteFormInput({
 
   // --- Handlers for the settings menu ---
   const handleDelete = async () => {
-    const result= await axios.delete('/api/website',{
-      data:{websiteId:websiteId}
-    })
-    toast.success('Website Deleted!');
-    router.replace('/dashboard');
+    try {
+      await axios.delete('/api/website', {
+        data: { websiteId: websiteId },
+      });
+      toast.success('Website Deleted!');
+      router.replace('/dashboard');
+    } catch (error) {
+      toast.error('Failed to delete website. Please try again.');
+      console.error('Delete website error', error);
+    }
   };
 
   const handleMoreSettings = () => {
@@ -206,7 +211,7 @@ function WebsiteFormInput({
                   <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                   <AlertDialogDescription>
                     This action cannot be undone. This will permanently delete
-                    your account from our servers.
+                    your website from your account.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

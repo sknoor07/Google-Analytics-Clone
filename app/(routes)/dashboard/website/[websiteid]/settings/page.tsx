@@ -1,7 +1,6 @@
 'use client'
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { WebsiteType } from "@/type";
 import axios from "axios";
@@ -18,8 +17,7 @@ function WebsiteSettings(){
     : params.websiteid;
     const [websiteDeatil, setWebsiteDetail]= useState<WebsiteType>();
     const router= useRouter();
-    const [websiteDomain, setWebsiteDomain] = useState<string>();
-     const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
 
     useEffect(() => {
       if (!websiteId) return;
@@ -29,27 +27,26 @@ function WebsiteSettings(){
     const getWebsiteDetails = async () => {
         try {
             const result = await axios.get(`/api/website?websiteId=${websiteId}&websiteOnly=true`);
-            //console.log(result.data);
             setWebsiteDetail(result?.data);
-            setWebsiteDomain(result?.data?.domain);
-
         } catch (error) {
             console.log('Problem with more detail api');
-            
         }
     }
 
     const copyScript = async () => {
+        if (!websiteDeatil?.domain) return;
         await navigator.clipboard.writeText(script);
         toast.success("Script copied successfully");
     }
 
-   const script = `<script
+   const script = websiteDeatil?.domain
+     ? `<script
     defer
     data-website-id="${websiteId}"
-    data-domain="${websiteDeatil?.domain}"
+    data-domain="${websiteDeatil.domain}"
     src="${origin}/analytics.js">
-</script>`;
+</script>`
+     : "";
 
 
     return(
@@ -75,16 +72,14 @@ function WebsiteSettings(){
                     </div>
 
                     <div className='bg-black rounded-xl p-5 overflow-auto '>
-
                         <pre className='text-sm text-green-400 whitespace-pre-wrap w-full'>
-                            {script}
+                            {script || 'Loading script…'}
                         </pre>
-
                     </div>
                     <div className='flex justify-between'>
-
                     <Button
                         onClick={copyScript}
+                        disabled={!websiteDeatil?.domain}
                         className='mt-5 cursor-pointer'
                     >
                         <Copy />
@@ -108,12 +103,15 @@ function WebsiteSettings(){
                 <CardDescription>Your Website Domain for Analytic Tracking...</CardDescription>
             </CardHeader>
             <CardContent>
-                <Input placeholder="website.com" value={websiteDomain}
-                onChange={(e)=>setWebsiteDomain(e.target.value)}
-                />
-                <div className=" mt-3 flex justify-between">
+                <div className='mb-3'>
+                  {websiteDeatil?.domain ? (
+                    <p className='text-sm'>{websiteDeatil.domain}</p>
+                  ) : (
+                    <p className='text-sm text-muted-foreground'>Loading website domain…</p>
+                  )}
+                </div>
+                <div className="mt-3">
                     Your public WEBTRACK ID is {websiteId}
-                    <Button className="cursor-pointer">Save</Button>
                 </div>
             </CardContent>
         </Card>
