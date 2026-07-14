@@ -1,19 +1,26 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 
 const isPublicRoute = createRouteMatcher([
-    '/sign-in(.*)',
-    '/sign-up(.*)',
-    '/',
-    '/analytics.js',
-    '/api/track(.*)',
-    '/api/live-user(.*)',
-])
+  "/",
+  "/sign-in(.*)",
+  "/sign-up(.*)",
+]);
 
 export default clerkMiddleware(async (auth, req) => {
-    if (!isPublicRoute(req)) {
-        await auth.protect()
-    }
-})
+  const pathname = req.nextUrl.pathname;
+
+  if (
+    pathname === "/analytics.js" ||
+    pathname.startsWith("/api/track") ||
+    pathname.startsWith("/api/live-user")
+  ) {
+    return;
+  }
+
+  if (!isPublicRoute(req)) {
+    await auth.protect();
+  }
+});
 
 export const config = {
     matcher: [
