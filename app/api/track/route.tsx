@@ -104,6 +104,7 @@ export async function POST(req: NextRequest) {
         })
         .returning();
     } else if (body?.type === "exit") {
+      console.log("Updating pageViewId:", body.pageViewId);
       result = await db
         .update(pageViewTable)
         .set({
@@ -115,10 +116,17 @@ export async function POST(req: NextRequest) {
         .returning();
     }
   } catch (error) {
-    return NextResponse.json({ error: "Failed to track" }, { status: 500, headers: CORS_HEADERS });
+    console.error("Track API Error:", error);
+
+    return NextResponse.json(
+      {
+        error: "Failed to track",
+        details: error instanceof Error ? error.message : String(error),
+      },
+      {
+        status: 500,
+        headers: CORS_HEADERS,
+      },
+    );
   }
-  return NextResponse.json(
-    { message: "Tracked successfully", data: result },
-    {headers:CORS_HEADERS}
-  );
 }
