@@ -1,7 +1,7 @@
 import { db } from "@/configs/db";
 import { pageViewTable, websiteTable } from "@/configs/schema";
 import { currentUser } from "@clerk/nextjs/server";
-import { and, desc, eq, gte, lte, sql } from "drizzle-orm";
+import { and, eq, gte, lte, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { toZonedTime } from "date-fns-tz";
 
@@ -609,9 +609,29 @@ export async function GET(req: NextRequest) {
 
 
 export async function DELETE(req: NextRequest) {
-  const {websiteId}= await req.json();
-  const user= await currentUser();
+  try {
+    const { websiteId } = await req.json();
 
-  const result= await db.delete(websiteTable).where(and(eq(websiteTable.websiteId,websiteId),eq(websiteTable.userEmail,user?.primaryEmailAddress?.emailAddress)));
-  return NextResponse.json({message:'Record Deleted Successfully'});
+    if (!websiteId) {
+      return NextResponse.json({ error: "websiteId is required" }, { status: 400 });
+    }
+
+    const user = await currentUser();
+    const email = user?.primaryEmailAddress?.emailAddress;
+    if (!email) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    await db.delete(websiteTable).where(
+      and(
+        eq(websiteTable.websiteId, websiteId),
+        eq(websiteTable?.userEmail, email),
+      ),
+    );
+
+    return NextResponse.json({ message: 'Record Deleted Successfully' });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ error: 'Failed to delete website' }, { status: 500 });
+  }
 }

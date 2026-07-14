@@ -1,5 +1,5 @@
-import { bigint } from "drizzle-orm/gel-core";
-import { boolean, integer, pgTable, unique, varchar } from "drizzle-orm/pg-core";
+
+import { boolean,bigint, integer, pgTable, unique, varchar } from "drizzle-orm/pg-core";
 export const usersTable = pgTable("users", {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
     name: varchar({ length: 255 }).notNull(),
@@ -42,14 +42,15 @@ export const pageViewTable= pgTable("pageViews",{
     country:varchar({length:50}),
     countryCode:varchar({length:10}),
     exitUrl:varchar({length:2048}),
-});
+}
+);
 
 
 export const liveUserTable= pgTable("liveUsers",{
     id:integer().primaryKey().generatedAlwaysAsIdentity(),
     websiteId:varchar().notNull(),
     visitorId:varchar().notNull(),
-    last_seen:bigint().notNull(),
+    last_seen:bigint({ mode: "number" }).notNull(),
     url:varchar({ length: 2048 }),
     city:varchar({length:50}),
     region:varchar({length:50}),
