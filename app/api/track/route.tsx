@@ -47,17 +47,17 @@ export async function POST(req: NextRequest) {
       req.headers.get("x-real-ip") ||
       null;
 
-    let geoInfo: any = {};
-    if (ip) {
-      try {
-        const geoRes = await fetch(`http://ip-api.com/json/${ip}`, {
-          signal: AbortSignal.timeout(5000),
-        });
-        geoInfo = await geoRes.json();
-      } catch {
-        geoInfo = {};
-      }
-    }
+    const geoInfo: any = {};
+    // if (ip) {
+    //   try {
+    //     const geoRes = await fetch(`http://ip-api.com/json/${ip}`, {
+    //       signal: AbortSignal.timeout(5000),
+    //     });
+    //     geoInfo = await geoRes.json();
+    //   } catch {
+    //     geoInfo = {};
+    //   }
+    // }
 
     if (body?.type !== "entry" && body?.type !== "exit") {
       return NextResponse.json(
@@ -103,7 +103,8 @@ export async function POST(req: NextRequest) {
           countryCode: geoInfo.countryCode || "",
         })
         .returning();
-    } else if (body?.type === "exit") {
+    }
+    if (body?.type === "exit") {
       console.log("Updating pageViewId:", body.pageViewId);
       result = await db
         .update(pageViewTable)
@@ -115,18 +116,23 @@ export async function POST(req: NextRequest) {
         .where(eq(pageViewTable.pageViewId, body.pageViewId))
         .returning();
     }
-  } catch (error) {
-    console.error("Track API Error:", error);
-
     return NextResponse.json(
-      {
-        error: "Failed to track",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      {
-        status: 500,
-        headers: CORS_HEADERS,
-      },
-    );
-  }
+        { message: "Tracked successfully", data: result },
+        { headers: CORS_HEADERS }
+      );
+  } catch (error) {
+  console.error("Track API failed:", error);
+
+  return NextResponse.json(
+    {
+      error: "Failed to track",
+      message:
+        error instanceof Error ? error.message : String(error),
+    },
+    {
+      status: 500,
+      headers: CORS_HEADERS,
+    }
+  );
+}
 }
