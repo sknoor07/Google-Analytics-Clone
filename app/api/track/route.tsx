@@ -73,6 +73,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const entryTime = body?.entryTime ?? null;
+    const exitTime = body?.exitTime ?? null;
+    const totalActiveTime = body?.totalActiveTime ?? 0;
+
     if (body?.type === "entry") {
       result = await db
         .insert(pageViewTable)
@@ -82,9 +86,9 @@ export async function POST(req: NextRequest) {
           websiteId: body.websiteId,
           domain: body.domain,
           type: body.type,
-          entryTime: body.entryTime,
-          exitTime: body.exitTime,
-          totalActiveTime: body.totalActiveTime,
+          entryTime: entryTime !== null ? Number(entryTime) : null,
+          exitTime: exitTime !== null ? Number(exitTime) : null,
+          totalActiveTime: Number(totalActiveTime),
           referrer: body.referrer,
           url: body.url,
           urlParams: body.urlParams,
@@ -107,8 +111,8 @@ export async function POST(req: NextRequest) {
       result = await db
         .update(pageViewTable)
         .set({
-          exitTime: body.exitTime,
-          totalActiveTime: body.totalActiveTime,
+          exitTime: exitTime !== null ? Number(exitTime) : null,
+          totalActiveTime: Number(totalActiveTime),
           exitUrl: body.exitUrl,
         })
         .where(eq(pageViewTable.pageViewId, body.pageViewId))
