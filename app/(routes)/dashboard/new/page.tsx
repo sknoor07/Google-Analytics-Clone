@@ -6,8 +6,10 @@ import WebsiteFrom from './_component/WebsiteFrom'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import GeneratedScript from './_component/GeneratedScript'
+import { connection } from 'next/server'
 
-export default function AddWebsite() {
+export default async function AddWebsite() {
+    await connection()
     const searchParams=useSearchParams();
     const step=searchParams.get("step");
 
