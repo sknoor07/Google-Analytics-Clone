@@ -68,29 +68,48 @@
 
   let activeStartTime = Math.floor(Date.now() / 1000);
   let totalActiveTime = 0;
+  let exitSent = false;
 
-  window.addEventListener("pagehide", () => {
+  const sendExitEvent = () => {
+    if (exitSent) return;
+    exitSent = true;
+
     const exitTime = Math.floor(Date.now() / 1000);
-
     totalActiveTime += Math.floor(Date.now() / 1000) - activeStartTime;
 
-    const blob = new Blob(
-      [
-        JSON.stringify({
-          type: "exit",
-          pageViewId,
-          websiteId,
-          domain,
-          exitTime,
-          totalActiveTime,
-          visitorId,
-          exitUrl: window.location.href,
-        }),
-      ],
-      { type: "application/json" },
-    );
+    const payload = {
+      type: "exit",
+      pageViewId,
+      websiteId,
+      domain,
+      exitTime,
+      totalActiveTime,
+      visitorId,
+      exitUrl: window.location.href,
+    };
 
-    navigator.sendBeacon(trackEndpoint, blob);
+    const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon(trackEndpoint, blob);
+    } else {
+      fetch(trackEndpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+        keepalive: true,
+      }).catch(() => {});
+    }
+  };
+
+  window.addEventListener("pagehide", sendExitEvent);
+  window.addEventListener("beforeunload", sendExitEvent);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") {
+      sendExitEvent();
+    }
   });
 
   const sendLivePing = () => {

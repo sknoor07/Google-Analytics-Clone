@@ -22,12 +22,23 @@ export async function POST(req: NextRequest) {
   try {
     let body;
     try {
-      body = await req.json();
-    } catch (parseError) {
       const rawBody = await req.text();
-      console.error("Invalid JSON payload:", rawBody, parseError);
+      if (!rawBody) {
+        return NextResponse.json(
+          { error: "Empty request body" },
+          { status: 400, headers: CORS_HEADERS },
+        );
+      }
+
+      try {
+        body = JSON.parse(rawBody);
+      } catch {
+        body = rawBody;
+      }
+    } catch (parseError) {
+      console.error("Failed to read request body:", parseError);
       return NextResponse.json(
-        { error: "Invalid JSON payload" },
+        { error: "Invalid request body" },
         { status: 400, headers: CORS_HEADERS },
       );
     }
