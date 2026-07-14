@@ -4,18 +4,12 @@ const isPublicRoute = createRouteMatcher([
   "/",
   "/sign-in(.*)",
   "/sign-up(.*)",
+  "/analytics.js",
+  "/api/track(.*)",
+  "/api/live-user(.*)",
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
-  const pathname = req.nextUrl.pathname;
-
-  if (
-    pathname === "/analytics.js" ||
-    pathname.startsWith("/api/track") ||
-    pathname.startsWith("/api/live-user")
-  ) {
-    return;
-  }
 
   if (!isPublicRoute(req)) {
     await auth.protect();
