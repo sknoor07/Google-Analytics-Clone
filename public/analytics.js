@@ -88,19 +88,25 @@
       exitUrl: window.location.href,
     };
 
-    const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+    const body = JSON.stringify(payload);
 
-    if (navigator.sendBeacon) {
-      navigator.sendBeacon(trackEndpoint, blob);
-    } else {
+    try {
+      navigator.sendBeacon(trackEndpoint, new Blob([body], { type: "application/json" }));
+    } catch (error) {
+      console.warn("Analytics beacon send failed", error);
+    }
+
+    try {
       fetch(trackEndpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload),
+        body,
         keepalive: true,
       }).catch(() => {});
+    } catch (error) {
+      console.warn("Analytics fetch fallback failed", error);
     }
   };
 

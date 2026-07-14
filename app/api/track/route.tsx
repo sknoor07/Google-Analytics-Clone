@@ -32,8 +32,12 @@ export async function POST(req: NextRequest) {
 
       try {
         body = JSON.parse(rawBody);
-      } catch {
-        body = rawBody;
+      } catch (parseError) {
+        console.error("Invalid JSON payload:", rawBody, parseError);
+        return NextResponse.json(
+          { error: "Invalid JSON payload" },
+          { status: 400, headers: CORS_HEADERS },
+        );
       }
     } catch (parseError) {
       console.error("Failed to read request body:", parseError);
@@ -84,10 +88,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const entryTime = body?.entryTime ?? null;
-    const exitTime = body?.exitTime ?? null;
-    const totalActiveTime = body?.totalActiveTime ?? 0;
-
     if (body?.type === "entry") {
       result = await db
         .insert(pageViewTable)
@@ -97,9 +97,9 @@ export async function POST(req: NextRequest) {
           websiteId: body.websiteId,
           domain: body.domain,
           type: body.type,
-          entryTime: entryTime !== null ? Number(entryTime) : null,
-          exitTime: exitTime !== null ? Number(exitTime) : null,
-          totalActiveTime: Number(totalActiveTime),
+          entryTime: body.entryTime,
+          exitTime: body.exitTime,
+          totalActiveTime: body.totalActiveTime,
           referrer: body.referrer,
           url: body.url,
           urlParams: body.urlParams,
@@ -122,8 +122,8 @@ export async function POST(req: NextRequest) {
       result = await db
         .update(pageViewTable)
         .set({
-          exitTime: exitTime !== null ? Number(exitTime) : null,
-          totalActiveTime: Number(totalActiveTime),
+          exitTime: body.exitTime,
+          totalActiveTime: body.totalActiveTime,
           exitUrl: body.exitUrl,
         })
         .where(eq(pageViewTable.pageViewId, body.pageViewId))
