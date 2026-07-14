@@ -204,7 +204,7 @@ export default function Home() {
               className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-[#dadce0] rounded-full text-sm text-[#5f6368] hover:border-[#1a73e8] hover:text-[#1a73e8] transition-colors duration-200 shadow-sm"
             >
               <span className="w-2 h-2 rounded-full bg-[#34a853] animate-pulse" />
-              TUBEGURUJI Membership - Join Now
+              A Project By Noor Alam
               <svg
                 className="w-4 h-4 text-[#5f6368]"
                 fill="none"

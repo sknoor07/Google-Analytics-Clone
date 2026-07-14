@@ -6,19 +6,14 @@ import { UAParser } from "ua-parser-js";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+  "Access-Control-Allow-Methods": "POST,OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
 export async function OPTIONS(req: Request) {
-  const origin = req.headers.get("origin") || "*";
   return new NextResponse(null, {
     status: 200,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
-    },
+    headers: CORS_HEADERS,
   });
 }
 
@@ -39,11 +34,19 @@ export async function POST(req: NextRequest) {
     const ip =
       req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       req.headers.get("x-real-ip") ||
-      "71.71.22.54";
-    const geoRes = await fetch(`http://ip-api.com/json/${ip}`, {
-      signal: AbortSignal.timeout(5000),
-    });
-    const geoInfo = await geoRes.json();
+      null;
+
+    let geoInfo: any = {};
+    if (ip) {
+      try {
+        const geoRes = await fetch(`http://ip-api.com/json/${ip}`, {
+          signal: AbortSignal.timeout(5000),
+        });
+        geoInfo = await geoRes.json();
+      } catch {
+        geoInfo = {};
+      }
+    }
 
     await db
       .insert(liveUserTable)
@@ -86,6 +89,7 @@ export async function POST(req: NextRequest) {
     console.error("Error in live-user route:", error);
     return new Response(JSON.stringify({ error: "Internal Server Error" }), {
       headers: CORS_HEADERS,
+      status:500
     });
   }
 }
@@ -104,11 +108,12 @@ export async function GET(req: NextRequest) {
           eq(liveUserTable.websiteId, websiteId as string),
         ),
       );
-    return NextResponse.json(activeUsers);
+    return NextResponse.json(activeUsers, { headers: CORS_HEADERS });
   } catch (error) {
     console.error("Error in live-user GET route:", error);
     return new Response(JSON.stringify({ error: "Internal Server Error" }), {
       status: 500,
+      headers: CORS_HEADERS,
     });
   }
 }

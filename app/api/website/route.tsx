@@ -609,21 +609,29 @@ export async function GET(req: NextRequest) {
 
 
 export async function DELETE(req: NextRequest) {
-  try{
-    const {websiteId}= await req.json();
-  const user= await currentUser();
-  const email = user?.primaryEmailAddress?.emailAddress;
-  if (!email) {
-      return NextResponse.json(
-        { message: "Unauthorized" },
-        { status: 401 }
-      );
+  try {
+    const { websiteId } = await req.json();
+
+    if (!websiteId) {
+      return NextResponse.json({ error: "websiteId is required" }, { status: 400 });
     }
 
-  await db.delete(websiteTable).where(and(eq(websiteTable.websiteId,websiteId),eq(websiteTable?.userEmail,email)));
-  } catch(error){
-    console.log(error);
+    const user = await currentUser();
+    const email = user?.primaryEmailAddress?.emailAddress;
+    if (!email) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    await db.delete(websiteTable).where(
+      and(
+        eq(websiteTable.websiteId, websiteId),
+        eq(websiteTable?.userEmail, email),
+      ),
+    );
+
+    return NextResponse.json({ message: 'Record Deleted Successfully' });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ error: 'Failed to delete website' }, { status: 500 });
   }
-  
-  return NextResponse.json({message:'Record Deleted Successfully'});
 }

@@ -6,19 +6,14 @@ import { UAParser } from "ua-parser-js";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+  "Access-Control-Allow-Methods": "POST,OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
 export async function OPTIONS(req: Request) {
-  const origin = req.headers.get("origin") || "*";
   return new NextResponse(null, {
     status: 200,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
-    },
+    headers: CORS_HEADERS,
   });
 }
 
@@ -33,7 +28,7 @@ export async function POST(req: NextRequest) {
       console.error("Invalid JSON payload:", rawBody, parseError);
       return NextResponse.json(
         { error: "Invalid JSON payload" },
-        { status: 400 },
+        { status: 400, headers: CORS_HEADERS },
       );
     }
     const parser = new UAParser(req.headers.get("user-agent") || "");
@@ -50,11 +45,19 @@ export async function POST(req: NextRequest) {
     const ip =
       req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       req.headers.get("x-real-ip") ||
-      "123.253.236.68";
-    const geoRes = await fetch(`http://ip-api.com/json/${ip}`, {
-      signal: AbortSignal.timeout(5000),
-    });
-    const geoInfo = await geoRes.json();
+      null;
+
+    let geoInfo: any = {};
+    if (ip) {
+      try {
+        const geoRes = await fetch(`http://ip-api.com/json/${ip}`, {
+          signal: AbortSignal.timeout(5000),
+        });
+        geoInfo = await geoRes.json();
+      } catch {
+        geoInfo = {};
+      }
+    }
 
     if (body?.type !== "entry" && body?.type !== "exit") {
       return NextResponse.json(
@@ -112,7 +115,7 @@ export async function POST(req: NextRequest) {
         .returning();
     }
   } catch (error) {
-    return NextResponse.json({ error: "Failed to track" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to track" }, { status: 500, headers: CORS_HEADERS });
   }
   return NextResponse.json(
     { message: "Tracked successfully", data: result },
