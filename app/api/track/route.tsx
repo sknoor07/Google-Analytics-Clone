@@ -47,17 +47,17 @@ export async function POST(req: NextRequest) {
       req.headers.get("x-real-ip") ||
       null;
 
-    const geoInfo: any = {};
-    // if (ip) {
-    //   try {
-    //     const geoRes = await fetch(`http://ip-api.com/json/${ip}`, {
-    //       signal: AbortSignal.timeout(5000),
-    //     });
-    //     geoInfo = await geoRes.json();
-    //   } catch {
-    //     geoInfo = {};
-    //   }
-    // }
+    let geoInfo: any = {};
+    if (ip) {
+      try {
+        const geoRes = await fetch(`http://ip-api.com/json/${ip}`, {
+          signal: AbortSignal.timeout(5000),
+        });
+        geoInfo = await geoRes.json();
+      } catch {
+        geoInfo = {};
+      }
+    }
 
     if (body?.type !== "entry" && body?.type !== "exit") {
       return NextResponse.json(
